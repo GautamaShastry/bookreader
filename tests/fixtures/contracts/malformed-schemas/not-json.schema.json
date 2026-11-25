@@ -1,0 +1,1 @@
+{ "type": "object", "properties": { "book_id": { "type": "string" }, }

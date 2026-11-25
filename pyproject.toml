@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bookscope"
+version = "0.0.0"
+description = "BookScope AI monorepo (BS-001 skeleton; no product features implemented)."
+requires-python = ">=3.12,<3.13"
+# Runtime dependencies. Exact versions are locked in requirements-dev.lock.
+dependencies = [
+  "fastapi==0.165.0",
+  "pyyaml==6.0.4",
+  "jsonschema==4.26.0",
+  "referencing==0.37.0",
+  "openapi-spec-validator==0.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.28.1",
+  "mypy==2.4.1",
+  "pytest==9.2.0",
+  "ruff==0.17.6",
+  "types-PyYAML==6.0.12.20261122",
+  "types-jsonschema==4.26.0.20261006",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "packages/contracts/src/bookscope_contracts",
+  "services/api/src/bookscope_api",
+  "services/ingestor/src/bookscope_ingestor",
+  "services/agent-runtime/src/bookscope_agent_runtime",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# specs/ is frozen and verified by checksum; it is never reformatted.
+extend-exclude = ["specs", "apps/web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S", "SIM", "RUF", "PT"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["bookscope_contracts", "bookscope_api", "bookscope_ingestor", "bookscope_agent_runtime"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S603"]
+"scripts/**" = ["S603", "S607"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+files = ["packages", "services", "tests", "scripts"]
+exclude = ["^apps/", "^specs/"]
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+xfail_strict = true
