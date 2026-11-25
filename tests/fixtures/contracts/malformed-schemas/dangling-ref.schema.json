@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Schema with an unresolvable local $ref (BS-001 negative fixture)",
+  "type": "object",
+  "properties": {
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/Claim" } }
+  }
+}

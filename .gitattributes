@@ -1,0 +1,6 @@
+# Keep LF everywhere so the frozen specs/MANIFEST.sha256 checksums match on every OS,
+# including Windows checkouts with core.autocrlf=true.
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.epub binary
