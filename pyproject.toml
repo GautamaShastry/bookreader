@@ -52,7 +52,7 @@ ignore = []
 known-first-party = ["bookscope_contracts", "bookscope_eval", "bookscope_api", "bookscope_ingestor", "bookscope_agent_runtime"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S603"]
+"tests/**" = ["S101", "S603", "RUF001", "RUF003"]  # tests use intentional Unicode
 "scripts/**" = ["S603", "S607"]
 
 [tool.mypy]
@@ -64,7 +64,7 @@ exclude = ["^apps/", "^specs/"]
 
 [[tool.mypy.overrides]]
 # PyMuPDF ships without type hints; only modules that call it may make untyped calls.
-module = ["generate_fixtures", "bookscope_ingestor.pdf"]
+module = ["generate_fixtures", "bookscope_ingestor.pdf", "test_pdf_parser"]
 disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
