@@ -43,6 +43,7 @@ def build_steps(*, include_web: bool, include_e2e: bool) -> list[Step]:
     steps = [
         Step("spec checksums + frozen v1.4 validator", [py, "scripts/verify_specs.py"]),
         Step("contract validator (schemas + OpenAPI refs)", [py, "-m", "bookscope_contracts"]),
+        Step("fixture manifest + eval cases (EV-001)", [py, "-m", "bookscope_eval"]),
         Step("ruff lint", [py, "-m", "ruff", "check", "."]),
         Step("ruff format --check", [py, "-m", "ruff", "format", "--check", "."]),
         Step("mypy --strict", [py, "-m", "mypy"]),

@@ -14,6 +14,8 @@ dependencies = [
   "jsonschema==4.26.0",
   "referencing==0.37.0",
   "openapi-spec-validator==0.9.0",
+  "pymupdf==1.28.2",
+  "defusedxml==0.7.1",
 ]
 
 [project.optional-dependencies]
@@ -24,11 +26,13 @@ dev = [
   "ruff==0.17.6",
   "types-PyYAML==6.0.12.20261122",
   "types-jsonschema==4.26.0.20261006",
+  "types-defusedxml==0.7.0.20260504",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = [
   "packages/contracts/src/bookscope_contracts",
+  "packages/eval/src/bookscope_eval",
   "services/api/src/bookscope_api",
   "services/ingestor/src/bookscope_ingestor",
   "services/agent-runtime/src/bookscope_agent_runtime",
@@ -45,7 +49,7 @@ select = ["E", "F", "W", "I", "B", "UP", "N", "S", "SIM", "RUF", "PT"]
 ignore = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["bookscope_contracts", "bookscope_api", "bookscope_ingestor", "bookscope_agent_runtime"]
+known-first-party = ["bookscope_contracts", "bookscope_eval", "bookscope_api", "bookscope_ingestor", "bookscope_agent_runtime"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S603"]
@@ -57,6 +61,11 @@ strict = true
 warn_unreachable = true
 files = ["packages", "services", "tests", "scripts"]
 exclude = ["^apps/", "^specs/"]
+
+[[tool.mypy.overrides]]
+# PyMuPDF ships without type hints; only modules that call it may make untyped calls.
+module = ["generate_fixtures", "bookscope_ingestor.pdf"]
+disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 minversion = "9.0"

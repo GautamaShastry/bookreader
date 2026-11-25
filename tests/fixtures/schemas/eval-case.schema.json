@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bookscope.example.invalid/tests/eval-case.schema.json",
+  "title": "BookScope evaluation case (one line of eval_cases.jsonl, EV-001)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "book_version_id", "question", "gold_source_ids", "expected_status", "reviewer_status"],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^[A-Z]+-[0-9]{3,}$"},
+    "book_version_id": {"type": "string", "format": "uuid"},
+    "question": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "gold_source_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*:[ps][0-9]{4}$"}
+    },
+    "expected_status": {
+      "enum": ["answered", "partial", "insufficient_evidence", "verification_failed", "unsupported_content"]
+    },
+    "reviewer_status": {"enum": ["pending_human_review", "verified", "disputed"]},
+    "notes": {"type": "string"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"expected_status": {"enum": ["answered", "partial"]}}},
+      "then": {"properties": {"gold_source_ids": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"expected_status": {"enum": ["insufficient_evidence", "unsupported_content"]}}},
+      "then": {"properties": {"gold_source_ids": {"maxItems": 0}}}
+    }
+  ]
+}

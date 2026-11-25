@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bookscope.example.invalid/tests/fixture-manifest.schema.json",
+  "title": "BookScope evaluation fixture manifest (EV-001)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_version", "spec_version", "generator", "normalization", "fixtures"],
+  "properties": {
+    "manifest_version": {"const": "1.0.0"},
+    "spec_version": {"const": "1.4.0"},
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["script", "version"],
+      "properties": {"script": {"type": "string"}, "version": {"type": "string"}}
+    },
+    "normalization": {"type": "string", "minLength": 1},
+    "fixtures": {"type": "array", "minItems": 3, "items": {"$ref": "#/$defs/Fixture"}}
+  },
+  "$defs": {
+    "SourceId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*:[ps][0-9]{4}$"},
+    "ErrorCode": {
+      "enum": [
+        "PDF_BAD_SIGNATURE", "PDF_ENCRYPTED", "PDF_CORRUPT", "PDF_NO_TEXT",
+        "PDF_TOO_LARGE", "PDF_TOO_MANY_PAGES",
+        "EPUB_BAD_CONTAINER", "EPUB_TOO_LARGE", "EPUB_UNSAFE_PATH", "EPUB_EXPANSION_LIMIT",
+        "EPUB_MALFORMED_PACKAGE", "EPUB_MISSING_SPINE", "EPUB_ENCRYPTED", "EPUB_FORBIDDEN_XML",
+        "EPUB_NO_TEXT"
+      ]
+    },
+    "License": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spdx", "origin", "author", "notes", "verified"],
+      "properties": {
+        "spdx": {"enum": ["CC0-1.0", "CC-BY-4.0", "PDDL-1.0"]},
+        "origin": {"enum": ["synthetic", "public_domain", "openly_licensed"]},
+        "author": {"type": "string", "minLength": 1},
+        "notes": {"type": "string"},
+        "verified": {"const": true}
+      }
+    },
+    "Fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id", "book_id", "book_version_id", "path", "format", "media_type", "sha256",
+        "size_bytes", "deterministic", "title", "description", "license", "expected_outcome",
+        "source_units", "chapters", "quotes", "label_source", "reviewer_status"
+      ],
+      "properties": {
+        "fixture_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "book_id": {"type": "string", "format": "uuid"},
+        "book_version_id": {"type": "string", "format": "uuid"},
+        "path": {"type": "string", "pattern": "^books/[a-z0-9][a-z0-9.-]*\\.(pdf|epub)$"},
+        "format": {"enum": ["pdf", "epub"]},
+        "media_type": {"enum": ["application/pdf", "application/epub+zip"]},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "deterministic": {"type": "boolean"},
+        "title": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "license": {"$ref": "#/$defs/License"},
+        "expected_outcome": {
+          "oneOf": [
+            {
+              "type": "object", "additionalProperties": false, "required": ["status"],
+              "properties": {"status": {"const": "accepted"}}
+            },
+            {
+              "type": "object", "additionalProperties": false, "required": ["status", "error_code"],
+              "properties": {"status": {"const": "rejected"}, "error_code": {"$ref": "#/$defs/ErrorCode"}}
+            }
+          ]
+        },
+        "source_units": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source_id", "status"],
+            "properties": {
+              "source_id": {"$ref": "#/$defs/SourceId"},
+              "status": {"enum": ["readable", "unreadable"]},
+              "page_index": {"type": "integer", "minimum": 0},
+              "page_label": {"type": "string"},
+              "spine_href": {"type": "string", "minLength": 1},
+              "first_line": {"type": "string", "minLength": 1},
+              "last_line": {"type": "string", "minLength": 1},
+              "anchors": {"type": "array", "items": {"type": "string"}},
+              "reading_order_lines": {"type": "array", "items": {"type": "string"}},
+              "excluded_text": {"type": "array", "items": {"type": "string"}}
+            },
+            "additionalProperties": false
+          }
+        },
+        "chapters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["chapter_id", "title", "toc_origin", "source_ids"],
+            "properties": {
+              "chapter_id": {"type": "string", "minLength": 1},
+              "title": {"type": "string", "minLength": 1},
+              "toc_origin": {"enum": ["bookmark", "inferred", "nav", "ncx"]},
+              "source_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/SourceId"}},
+              "spine_href": {"type": "string"},
+              "anchor_id": {"type": ["string", "null"]},
+              "unresolved_anchor": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "quotes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["quote_id", "text", "expected_source_ids", "ambiguous"],
+            "properties": {
+              "quote_id": {"type": "string", "minLength": 1},
+              "text": {"type": "string", "minLength": 1},
+              "expected_source_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/SourceId"}},
+              "ambiguous": {"type": "boolean"},
+              "anchor_id": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "label_source": {"enum": ["generator", "human"]},
+        "reviewer_status": {"enum": ["pending_human_review", "verified", "disputed"]}
+      }
+    }
+  }
+}
