@@ -218,6 +218,9 @@ def check_full_summary(response: Any, ledger: LedgerView) -> list[Violation]:
     if status == "ready":
         if label != "complete" or not fully_covered:
             v(Violation("FALSE_READY", "ready requires complete coverage and no failed chapter"))
+        elif len(summaries) != len(ledger.chapters) or completed != len(ledger.chapters):
+            # counters can lie; the chapter summaries themselves must cover every ledger chapter
+            v(Violation("FALSE_READY", "ready requires a completed summary for every chapter"))
         if not overview:
             v(Violation("FALSE_READY", "ready requires overview claims"))
     elif label == "complete":
