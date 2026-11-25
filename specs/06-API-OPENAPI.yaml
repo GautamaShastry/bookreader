@@ -1269,17 +1269,17 @@ components:
         overview_claims:
           type: array
           items:
-            $ref: '#/$defs/Claim'
+            $ref: '#/components/schemas/FullBookSummaryResponse/$defs/Claim'
         chapter_summaries:
           type: array
           items:
-            $ref: '#/$defs/ChapterSummary'
+            $ref: '#/components/schemas/FullBookSummaryResponse/$defs/ChapterSummary'
         coverage:
-          $ref: '#/$defs/Coverage'
+          $ref: '#/components/schemas/FullBookSummaryResponse/$defs/Coverage'
         citations:
           type: array
           items:
-            $ref: '#/$defs/Citation'
+            $ref: '#/components/schemas/FullBookSummaryResponse/$defs/Citation'
         updated_at:
           type: string
           format: date-time
@@ -1336,7 +1336,7 @@ components:
             claims:
               type: array
               items:
-                $ref: '#/$defs/Claim'
+                $ref: '#/components/schemas/FullBookSummaryResponse/$defs/Claim'
             source_unit_count:
               type: integer
               minimum: 0
