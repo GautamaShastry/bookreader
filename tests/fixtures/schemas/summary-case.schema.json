@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bookscope.example.invalid/tests/summary-case.schema.json",
+  "title": "Full-book summary evaluation case (EV-009)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "fixture_id", "expected_status", "topics", "label_status", "notes"],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^FBS-[0-9]{3,}$"},
+    "fixture_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "expected_status": {"enum": ["ready", "partial", "failed"]},
+    "label_status": {"enum": ["synthetic", "pending_human_review", "human_verified"]},
+    "notes": {"type": "string"},
+    "topics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic_id", "chapter_ordinal", "quote", "material"],
+        "properties": {
+          "topic_id": {"type": "string", "minLength": 1},
+          "chapter_ordinal": {"type": "integer", "minimum": 1},
+          "quote": {"type": "string", "minLength": 8},
+          "material": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

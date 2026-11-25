@@ -48,6 +48,10 @@ def build_steps(*, include_web: bool, include_e2e: bool) -> list[Step]:
             "source-integrity scorecard (EV-002)",
             [py, "-m", "bookscope_eval.source_scorecard", "--out", str(RESULTS)],
         ),
+        Step(
+            "full-book summary scorecard, synthetic (EV-009)",
+            [py, "-m", "bookscope_eval.summary_scorecard", "--out", str(RESULTS)],
+        ),
         Step("ruff lint", [py, "-m", "ruff", "check", "."]),
         Step("ruff format --check", [py, "-m", "ruff", "format", "--check", "."]),
         Step("mypy --strict", [py, "-m", "mypy"]),
