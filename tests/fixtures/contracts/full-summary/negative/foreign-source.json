@@ -1,0 +1,79 @@
+{
+  "expected_violation_codes": [
+    "UNKNOWN_SOURCE"
+  ],
+  "response": {
+    "book_id": "11111111-1111-4111-8111-111111111111",
+    "book_version_id": "22222222-2222-4222-8222-222222222222",
+    "summary_spec_version": "1.4.0",
+    "status": "ready",
+    "overview_claims": [
+      {
+        "claim_id": "claim-1",
+        "text": "The sample document introduces two fictional topics in separate chapters.",
+        "source_ids": [
+          "source-a",
+          "source-from-other-book"
+        ]
+      }
+    ],
+    "chapter_summaries": [
+      {
+        "chapter_id": "chapter-1",
+        "state": "complete",
+        "claims": [
+          {
+            "claim_id": "claim-2",
+            "text": "Chapter one covers topic A.",
+            "source_ids": [
+              "source-a"
+            ]
+          }
+        ],
+        "source_unit_count": 1,
+        "accounted_unit_count": 1
+      },
+      {
+        "chapter_id": "chapter-2",
+        "state": "complete",
+        "claims": [
+          {
+            "claim_id": "claim-3",
+            "text": "Chapter two covers topic B.",
+            "source_ids": [
+              "source-b"
+            ]
+          }
+        ],
+        "source_unit_count": 1,
+        "accounted_unit_count": 1
+      }
+    ],
+    "coverage": {
+      "chapters_expected": 2,
+      "chapters_accounted": 2,
+      "chapters_completed": 2,
+      "failed_chapter_ids": [],
+      "source_units_expected": 2,
+      "source_units_accounted": 2,
+      "completeness_label": "complete"
+    },
+    "citations": [
+      {
+        "source_id": "source-a",
+        "chapter_id": "chapter-1"
+      },
+      {
+        "source_id": "source-b",
+        "chapter_id": "chapter-2"
+      },
+      {
+        "source_id": "source-from-other-book",
+        "chapter_id": "chapter-2"
+      }
+    ],
+    "updated_at": "2026-11-24T00:00:00Z",
+    "job_id": null,
+    "error_code": null
+  }
+}

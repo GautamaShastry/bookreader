@@ -1,0 +1,21 @@
+{
+  "book_id": "11111111-1111-4111-8111-111111111111",
+  "book_version_id": "22222222-2222-4222-8222-222222222222",
+  "summary_spec_version": "1.4.0",
+  "status": "failed",
+  "overview_claims": [],
+  "chapter_summaries": [],
+  "coverage": {
+    "chapters_expected": 2,
+    "chapters_accounted": 0,
+    "chapters_completed": 0,
+    "failed_chapter_ids": [],
+    "source_units_expected": 2,
+    "source_units_accounted": 0,
+    "completeness_label": "unavailable"
+  },
+  "citations": [],
+  "updated_at": "2026-11-24T00:00:00Z",
+  "job_id": null,
+  "error_code": "WORKER_FAILED"
+}
