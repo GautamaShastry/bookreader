@@ -1,0 +1,40 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+.coverage
+htmlcov/
+# JS and build
+node_modules/
+.next/
+dist/
+build/
+playwright-report/
+test-results/
+# Environment, AWS, and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+.aws/
+cdk.out/
+.terraform/
+# Private books and generated content
+data/
+local-data/
+uploads/
+private-books/
+artifacts/
+eval-reports/
+# Editor and OS
+.DS_Store
+Thumbs.db
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log

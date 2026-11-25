@@ -1,0 +1,82 @@
+{
+  "spec_version": "1.4.0",
+  "status": "approved_for_local_implementation_only",
+  "tickets": [
+    {
+      "id": "BS-001",
+      "depends_on": [],
+      "title": "Monorepo and contracts CI",
+      "hard_gate": "deterministic contracts/lint/test CI green"
+    },
+    {
+      "id": "EV-001",
+      "depends_on": [
+        "BS-001"
+      ],
+      "title": "Permitted corpus and gold manifest",
+      "hard_gate": "all sources, labels, permissions, hashes valid"
+    },
+    {
+      "id": "BS-004",
+      "depends_on": [
+        "BS-001",
+        "EV-001"
+      ],
+      "title": "PDF parser and source locator",
+      "hard_gate": "100% labeled page/quote locators"
+    },
+    {
+      "id": "EV-002",
+      "depends_on": [
+        "BS-004"
+      ],
+      "title": "Source integrity eval harness",
+      "hard_gate": "corrupt cases fail and reports reproducible"
+    },
+    {
+      "id": "BS-005",
+      "depends_on": [
+        "BS-001",
+        "EV-001"
+      ],
+      "title": "EPUB parser and source locator",
+      "hard_gate": "safe EPUB parsing and resolved citation anchors"
+    },
+    {
+      "id": "BS-006",
+      "depends_on": [
+        "BS-004",
+        "BS-005",
+        "EV-002"
+      ],
+      "title": "Canonical chunker and ordered chapter ledger",
+      "hard_gate": "all fixture source units accounted; stable IDs"
+    },
+    {
+      "id": "BS-026",
+      "depends_on": [
+        "BS-001"
+      ],
+      "title": "Full-book summary OpenAPI and schema contract",
+      "hard_gate": "positive/negative schema and state tests pass"
+    },
+    {
+      "id": "BS-027",
+      "depends_on": [
+        "BS-006",
+        "BS-026"
+      ],
+      "title": "Offline hierarchical summary graph",
+      "hard_gate": "no false ready; bounded work; citations and budget tests"
+    },
+    {
+      "id": "EV-009",
+      "depends_on": [
+        "BS-027",
+        "EV-001"
+      ],
+      "title": "Full-book summary eval harness",
+      "hard_gate": "scoring catches coverage and support failures"
+    }
+  ]
+}

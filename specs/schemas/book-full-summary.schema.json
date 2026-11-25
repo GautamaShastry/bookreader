@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FullBookSummaryResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "book_id",
+    "book_version_id",
+    "summary_spec_version",
+    "status",
+    "overview_claims",
+    "chapter_summaries",
+    "coverage",
+    "citations",
+    "updated_at"
+  ],
+  "properties": {
+    "book_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "book_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "summary_spec_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "generating",
+        "verifying",
+        "ready",
+        "partial",
+        "failed",
+        "unavailable"
+      ]
+    },
+    "overview_claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Claim"
+      }
+    },
+    "chapter_summaries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ChapterSummary"
+      }
+    },
+    "coverage": {
+      "$ref": "#/$defs/Coverage"
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Citation"
+      }
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "job_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "error_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$defs": {
+    "Claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "text",
+        "source_ids"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "ChapterSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chapter_id",
+        "state",
+        "claims",
+        "source_unit_count",
+        "accounted_unit_count"
+      ],
+      "properties": {
+        "chapter_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "enum": [
+            "complete",
+            "partial",
+            "failed",
+            "excluded_nonmaterial"
+          ]
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Claim"
+          }
+        },
+        "source_unit_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accounted_unit_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "Coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chapters_expected",
+        "chapters_accounted",
+        "chapters_completed",
+        "failed_chapter_ids",
+        "source_units_expected",
+        "source_units_accounted",
+        "completeness_label"
+      ],
+      "properties": {
+        "chapters_expected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "chapters_accounted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "chapters_completed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed_chapter_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_units_expected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_units_accounted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completeness_label": {
+          "enum": [
+            "complete",
+            "partial",
+            "unavailable"
+          ]
+        }
+      }
+    },
+    "Citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "chapter_id"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapter_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

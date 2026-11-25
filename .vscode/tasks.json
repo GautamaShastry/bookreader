@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Verify frozen spec v1.4",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/verify_specs.py"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

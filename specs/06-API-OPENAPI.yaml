@@ -1,0 +1,1395 @@
+openapi: 3.1.0
+info:
+  title: BookScope AI API
+  version: 1.4.0
+  description: 'BookScope v1.4: web-first book-grounded multi-agent reader, cached Book Intelligence Brief
+    on open; adds user-requested asynchronous full-book hierarchical summaries with versioned citations
+    and stage-wise evaluation gates. No unverified factual streams.'
+x-internal-agent-contract: schemas/agent-contract.schema.json
+servers:
+- url: https://api.example.invalid
+  description: Placeholder. Replace after deployment.
+tags:
+- name: books
+- name: conversations
+- name: jobs
+security:
+- CognitoJWT: []
+paths:
+  /v1/books/uploads:
+    post:
+      summary: Reserve a private book upload
+      operationId: reserveBookUpload
+      tags:
+      - books
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - book_id
+                - book_version_id
+                - upload_url
+                - upload_form_fields
+                - expires_in_seconds
+                properties:
+                  book_id:
+                    type: string
+                    format: uuid
+                  book_version_id:
+                    type: string
+                    format: uuid
+                  upload_url:
+                    type: string
+                    format: uri
+                  upload_form_fields:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  expires_in_seconds:
+                    type: integer
+        '400': &id001
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401': &id002
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404': &id003
+          description: Not found or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409': &id004
+          description: Conflict or book not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '413': &id005
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '422': &id006
+          description: Unprocessable input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '429': &id007
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '503': &id008
+          description: Upstream service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - filename
+              - mime_type
+              - size_bytes
+              properties:
+                filename:
+                  type: string
+                  maxLength: 200
+                mime_type:
+                  enum:
+                  - application/pdf
+                  - application/epub+zip
+                size_bytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 26214400
+              additionalProperties: false
+  /v1/books/{book_id}/complete-upload:
+    post:
+      summary: Validate uploaded S3 object and queue indexing
+      operationId: completeBookUpload
+      tags:
+      - books
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - sha256
+              - size_bytes
+              properties:
+                sha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+                size_bytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 26214400
+              additionalProperties: false
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/books:
+    get:
+      summary: List books owned by caller
+      operationId: listBooks
+      tags:
+      - books
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - books
+                properties:
+                  books:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+  /v1/books/{book_id}:
+    get:
+      summary: Get authorized book and processing status
+      operationId: getBook
+      tags:
+      - books
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      summary: Immediately revoke access and queue secure purge
+      operationId: deleteBook
+      tags:
+      - books
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/books/{book_id}/toc:
+    get:
+      summary: Return table of contents
+      operationId: getBookToc
+      tags:
+      - books
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - chapters
+                properties:
+                  chapters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chapter'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/books/{book_id}/reader-link:
+    get:
+      summary: Issue short-lived authorized reader URL
+      operationId: getReaderLink
+      tags:
+      - books
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - url
+                - expires_in_seconds
+                - mime_type
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  expires_in_seconds:
+                    type: integer
+                    maximum: 600
+                  mime_type:
+                    type: string
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/books/{book_id}/sources/{chunk_id}:
+    get:
+      summary: Resolve validated citation source
+      operationId: resolveBookSource
+      tags:
+      - books
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - chunk_id
+                - chapter_id
+                - text
+                - source_locator
+                - book_version_id
+                properties:
+                  chunk_id:
+                    type: string
+                  chapter_id:
+                    type: string
+                  text:
+                    type: string
+                  source_locator:
+                    $ref: '#/components/schemas/SourceLocator'
+                  book_version_id:
+                    type: string
+                    format: uuid
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: chunk_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /v1/books/{book_id}/chapter-summaries:
+    post:
+      summary: Queue coverage-aware chapter summary
+      operationId: summarizeBookChapter
+      tags:
+      - books
+      responses:
+        '202':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - chapter_id
+              properties:
+                chapter_id:
+                  type: string
+                  minLength: 1
+              additionalProperties: false
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/conversations:
+    post:
+      summary: Create conversation pinned to authorized book version
+      operationId: createConversation
+      tags:
+      - conversations
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - book_id
+              properties:
+                book_id:
+                  type: string
+                  format: uuid
+              additionalProperties: false
+  /v1/conversations/{conversation_id}:
+    get:
+      summary: Get authorized conversation metadata
+      operationId: getConversation
+      tags:
+      - conversations
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/conversations/{conversation_id}/messages:
+    get:
+      summary: List conversation messages
+      operationId: listMessages
+      tags:
+      - conversations
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - messages
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - role
+                      - created_at
+                      - content
+                      properties:
+                        role:
+                          enum:
+                          - user
+                          - assistant
+                        created_at:
+                          type: string
+                          format: date-time
+                        content:
+                          type:
+                          - string
+                          - 'null'
+                        answer:
+                          $ref: '#/components/schemas/Answer'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Submit question or verified selection for guarded response
+      operationId: askBook
+      tags:
+      - conversations
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - question
+              - mode
+              properties:
+                question:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                mode:
+                  enum:
+                  - ask
+                  - explain_selection
+                selection:
+                  $ref: '#/components/schemas/Selection'
+              additionalProperties: false
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/jobs/{job_id}:
+    get:
+      summary: Get authorized background job state / result
+      operationId: getJob
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400': *id001
+        '401': *id002
+        '404': *id003
+        '409': *id004
+        '413': *id005
+        '422': *id006
+        '429': *id007
+        '503': *id008
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+  /v1/books/{book_id}/brief:
+    get:
+      summary: Get version-pinned verified or preparing Book Intelligence Brief without triggering generation
+      operationId: getBookBrief
+      tags:
+      - books
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Book brief state and only approved verified book claims
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookBriefResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Book not found or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Version conflict or book deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '503':
+          description: Brief metadata temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+      description: AuthZ and immutable-version checks required. GET never initiates an LLM call or duplicate
+        job. Cache-Control private; version-aware ETag optional.
+  /v1/books/{book_id}/full-summary:
+    post:
+      summary: Queue user-requested hierarchical full-book summary (never on BOOK_OPENED)
+      operationId: requestFullBookSummary
+      tags:
+      - books
+      parameters:
+      - &id009
+        name: book_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 8
+          maxLength: 128
+      description: Requires READY authorized immutable book, validated chapter manifest, per-job cost
+        preflight and admission controls. Reuses in-flight or cached jobs when keys/config match.
+      responses:
+        '202':
+          description: Queued or reused authorized job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        401: &id010
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        404: &id011
+          description: Book unavailable or not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        409: &id012
+          description: Book not ready or version changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        422: &id013
+          description: Invalid source inventory or data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        429: &id014
+          description: Rate limit or cost allowance exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        503: &id015
+          description: Provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      summary: Read cached full-book summary or status (no inference)
+      operationId: getFullBookSummary
+      tags:
+      - books
+      parameters:
+      - *id009
+      description: No fresh LLM work; return summary state, canonical citations and explicit coverage
+        for authorized current immutable version only.
+      responses:
+        '200':
+          description: Authorized version-bound result or job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullBookSummaryResponse'
+        401: *id010
+        404: *id011
+        409: *id012
+        422: *id013
+        429: *id014
+        503: *id015
+components:
+  securitySchemes:
+    CognitoJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Amazon Cognito user pool access token verified by API authorizer and backend.
+  schemas:
+    ApiError:
+      type: object
+      required:
+      - code
+      - message
+      - correlation_id
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        correlation_id:
+          type: string
+      additionalProperties: false
+    Book:
+      type: object
+      required:
+      - book_id
+      - active_version_id
+      - title
+      - format
+      - status
+      - created_at
+      properties:
+        book_id:
+          type: string
+          format: uuid
+        active_version_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        format:
+          enum:
+          - pdf
+          - epub
+        status:
+          enum:
+          - pending_upload
+          - uploaded
+          - parsing
+          - indexing
+          - ready
+          - failed
+          - deleting
+          - deleted
+        page_count:
+          type:
+          - integer
+          - 'null'
+        chapter_count:
+          type:
+          - integer
+          - 'null'
+        failure_code:
+          type:
+          - string
+          - 'null'
+        created_at:
+          type: string
+          format: date-time
+    Job:
+      type: object
+      required:
+      - job_id
+      - job_type
+      - book_id
+      - status
+      - phase
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        job_type:
+          enum:
+          - ingest
+          - chapter_summary
+          - delete
+          - full_book_summary
+        book_id:
+          type: string
+          format: uuid
+        status:
+          enum:
+          - queued
+          - running
+          - completed
+          - partial
+          - failed
+        phase:
+          type: string
+        error_code:
+          type:
+          - string
+          - 'null'
+        result:
+          type:
+          - object
+          - 'null'
+          additionalProperties: true
+    Chapter:
+      type: object
+      required:
+      - chapter_id
+      - title
+      - order
+      properties:
+        chapter_id:
+          type: string
+        title:
+          type: string
+        order:
+          type: integer
+          minimum: 0
+        inferred:
+          type: boolean
+    Conversation:
+      type: object
+      required:
+      - conversation_id
+      - book_id
+      - book_version_id
+      - created_at
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        book_id:
+          type: string
+          format: uuid
+        book_version_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+    SourceLocator: &id016
+      title: SourceLocator
+      oneOf:
+      - type: object
+        required:
+        - kind
+        - page_index
+        additionalProperties: false
+        properties:
+          kind:
+            const: pdf
+          page_index:
+            type: integer
+            minimum: 0
+          page_label:
+            type:
+            - string
+            - 'null'
+      - type: object
+        required:
+        - kind
+        - spine_href
+        - text_quote
+        additionalProperties: false
+        properties:
+          kind:
+            const: epub
+          spine_href:
+            type: string
+            minLength: 1
+          anchor_id:
+            type:
+            - string
+            - 'null'
+          normalized_offset:
+            type:
+            - integer
+            - 'null'
+            minimum: 0
+          text_quote:
+            type: string
+            minLength: 1
+    Selection:
+      type: object
+      required:
+      - selected_text
+      - source_locator
+      properties:
+        selected_text:
+          type: string
+          minLength: 1
+          maxLength: 3000
+        source_locator: *id016
+    Answer:
+      title: BookScopeAnswerResponse
+      type: object
+      additionalProperties: false
+      required:
+      - message_id
+      - conversation_id
+      - book_id
+      - book_version_id
+      - status
+      - answer
+      - user_message
+      - citations
+      - grounding
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        conversation_id:
+          type: string
+          format: uuid
+        book_id:
+          type: string
+          format: uuid
+        book_version_id:
+          type: string
+          format: uuid
+        status:
+          enum:
+          - answered
+          - partial
+          - insufficient_evidence
+          - verification_failed
+          - unsupported_content
+          - processing
+        answer:
+          type:
+          - string
+          - 'null'
+        user_message:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        grounding:
+          $ref: '#/components/schemas/Grounding'
+      allOf:
+      - if:
+          properties:
+            status:
+              enum:
+              - answered
+              - partial
+        then:
+          properties:
+            answer:
+              type: string
+              minLength: 1
+            citations:
+              minItems: 1
+      - if:
+          properties:
+            status:
+              enum:
+              - insufficient_evidence
+              - verification_failed
+              - unsupported_content
+              - processing
+        then:
+          properties:
+            answer:
+              type: 'null'
+            citations:
+              maxItems: 0
+    Citation:
+      type: object
+      additionalProperties: false
+      required:
+      - citation_id
+      - chunk_id
+      - book_id
+      - book_version_id
+      - chapter_id
+      - source_locator
+      - source_excerpt
+      - verified
+      properties:
+        citation_id:
+          type: string
+        chunk_id:
+          type: string
+        book_id:
+          type: string
+          format: uuid
+        book_version_id:
+          type: string
+          format: uuid
+        chapter_id:
+          type: string
+        source_locator:
+          $ref: '#/components/schemas/SourceLocator'
+        source_excerpt:
+          type: string
+          maxLength: 500
+        verified:
+          const: true
+    Grounding:
+      type: object
+      additionalProperties: false
+      required:
+      - verified
+      - claims_checked
+      - claims_supported
+      properties:
+        verified:
+          type: boolean
+        claims_checked:
+          type: integer
+          minimum: 0
+        claims_supported:
+          type: integer
+          minimum: 0
+        verification_version:
+          type:
+          - string
+          - 'null'
+    BookBriefResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - book_id
+      - book_version_id
+      - book_status
+      - status
+      - brief_spec_version
+      - chapters
+      - overview
+      - key_concepts
+      - citations
+      - coverage
+      - updated_at
+      properties:
+        book_id:
+          type: string
+          format: uuid
+        book_version_id:
+          type: string
+          format: uuid
+        book_status:
+          type: string
+          enum:
+          - uploaded
+          - parsing
+          - indexing
+          - ready
+          - failed
+          - deleting
+          - deleted
+        status:
+          type: string
+          enum:
+          - queued
+          - generating
+          - verifying
+          - ready
+          - partial
+          - failed
+          - unavailable
+        brief_spec_version:
+          type: string
+          minLength: 1
+        overview:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookBriefResponse/$defs/Claim'
+          maxItems: 8
+        key_concepts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookBriefResponse/$defs/Claim'
+          maxItems: 15
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookBriefResponse/$defs/Chapter'
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookBriefResponse/$defs/Citation'
+        coverage:
+          type: object
+          required:
+          - chapter_count
+          - chapters_verified
+          - chapters_unavailable
+          - completeness_label
+          additionalProperties: false
+          properties:
+            chapter_count:
+              type: integer
+              minimum: 0
+            chapters_verified:
+              type: integer
+              minimum: 0
+            chapters_unavailable:
+              type: array
+              items:
+                type: string
+            completeness_label:
+              type: string
+              enum:
+              - verified_orientation
+              - partial_orientation
+              - outline_only
+              - unavailable
+        updated_at:
+          type: string
+          format: date-time
+        error_code:
+          type:
+          - string
+          - 'null'
+        job_id:
+          type:
+          - string
+          - 'null'
+      $defs:
+        Claim:
+          type: object
+          required:
+          - claim_id
+          - text
+          - source_ids
+          additionalProperties: false
+          properties:
+            claim_id:
+              type: string
+            text:
+              type: string
+            source_ids:
+              type: array
+              minItems: 1
+              items:
+                type: string
+        Chapter:
+          type: object
+          required:
+          - chapter_id
+          - title
+          - status
+          - source_ids
+          additionalProperties: false
+          properties:
+            chapter_id:
+              type: string
+            title:
+              type: string
+            status:
+              type: string
+              enum:
+              - verified
+              - outline_only
+              - unavailable
+            summary:
+              type:
+              - string
+              - 'null'
+            source_ids:
+              type: array
+              items:
+                type: string
+        Citation:
+          type: object
+          required:
+          - source_id
+          - chapter_id
+          - locator
+          additionalProperties: false
+          properties:
+            source_id:
+              type: string
+            chapter_id:
+              type: string
+            locator:
+              type: object
+              minProperties: 1
+              additionalProperties: true
+    FullBookSummaryResponse:
+      title: FullBookSummaryResponse
+      type: object
+      additionalProperties: false
+      required:
+      - book_id
+      - book_version_id
+      - summary_spec_version
+      - status
+      - overview_claims
+      - chapter_summaries
+      - coverage
+      - citations
+      - updated_at
+      properties:
+        book_id:
+          type: string
+          format: uuid
+        book_version_id:
+          type: string
+          format: uuid
+        summary_spec_version:
+          type: string
+          minLength: 1
+        status:
+          enum:
+          - queued
+          - generating
+          - verifying
+          - ready
+          - partial
+          - failed
+          - unavailable
+        overview_claims:
+          type: array
+          items:
+            $ref: '#/$defs/Claim'
+        chapter_summaries:
+          type: array
+          items:
+            $ref: '#/$defs/ChapterSummary'
+        coverage:
+          $ref: '#/$defs/Coverage'
+        citations:
+          type: array
+          items:
+            $ref: '#/$defs/Citation'
+        updated_at:
+          type: string
+          format: date-time
+        job_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        error_code:
+          type:
+          - string
+          - 'null'
+      $defs:
+        Claim:
+          type: object
+          additionalProperties: false
+          required:
+          - claim_id
+          - text
+          - source_ids
+          properties:
+            claim_id:
+              type: string
+              minLength: 1
+            text:
+              type: string
+              minLength: 1
+            source_ids:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items:
+                type: string
+                minLength: 1
+        ChapterSummary:
+          type: object
+          additionalProperties: false
+          required:
+          - chapter_id
+          - state
+          - claims
+          - source_unit_count
+          - accounted_unit_count
+          properties:
+            chapter_id:
+              type: string
+              minLength: 1
+            state:
+              enum:
+              - complete
+              - partial
+              - failed
+              - excluded_nonmaterial
+            claims:
+              type: array
+              items:
+                $ref: '#/$defs/Claim'
+            source_unit_count:
+              type: integer
+              minimum: 0
+            accounted_unit_count:
+              type: integer
+              minimum: 0
+        Coverage:
+          type: object
+          additionalProperties: false
+          required:
+          - chapters_expected
+          - chapters_accounted
+          - chapters_completed
+          - failed_chapter_ids
+          - source_units_expected
+          - source_units_accounted
+          - completeness_label
+          properties:
+            chapters_expected:
+              type: integer
+              minimum: 0
+            chapters_accounted:
+              type: integer
+              minimum: 0
+            chapters_completed:
+              type: integer
+              minimum: 0
+            failed_chapter_ids:
+              type: array
+              uniqueItems: true
+              items:
+                type: string
+            source_units_expected:
+              type: integer
+              minimum: 0
+            source_units_accounted:
+              type: integer
+              minimum: 0
+            completeness_label:
+              enum:
+              - complete
+              - partial
+              - unavailable
+        Citation:
+          type: object
+          additionalProperties: false
+          required:
+          - source_id
+          - chapter_id
+          properties:
+            source_id:
+              type: string
+              minLength: 1
+            chapter_id:
+              type: string
+              minLength: 1

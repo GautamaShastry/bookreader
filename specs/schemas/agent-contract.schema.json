@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bookscope.example.invalid/schemas/agent-contract.schema.json",
+  "title": "BookScope Internal Agent Contracts v1.1",
+  "$defs": {
+    "SourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chunk_id",
+        "sha256",
+        "locator",
+        "section_id"
+      ],
+      "properties": {
+        "chunk_id": {
+          "type": "string",
+          "minLength": 8
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "SupervisorDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "mode",
+        "subqueries",
+        "reason_code"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "mode": {
+          "enum": [
+            "ASK",
+            "EXPLAIN_SELECTION",
+            "SUMMARIZE_CHAPTER"
+          ]
+        },
+        "subqueries": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "chapter_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "question",
+            "selected_passage",
+            "chapter_request",
+            "unclear"
+          ]
+        }
+      }
+    },
+    "EvidenceBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "book_version_id",
+        "question",
+        "passages",
+        "coverage",
+        "canonical_source_proof"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "book_version_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "question": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "passages": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        },
+        "coverage": {
+          "enum": [
+            "sufficient",
+            "insufficient",
+            "partial"
+          ]
+        },
+        "canonical_source_proof": {
+          "const": "backend_validated"
+        }
+      }
+    },
+    "Claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "text",
+        "evidence_chunk_ids"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_chunk_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 8
+          }
+        }
+      }
+    },
+    "TeachingDraft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "claims",
+        "candidate_status"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Claim"
+          }
+        },
+        "candidate_status": {
+          "enum": [
+            "answered",
+            "partial",
+            "insufficient_evidence"
+          ]
+        }
+      }
+    },
+    "ClaimVerdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "supported",
+        "evidence_chunk_ids"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string"
+        },
+        "supported": {
+          "type": "boolean"
+        },
+        "evidence_chunk_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "VerificationVerdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "claim_results",
+        "coverage_ok",
+        "decision",
+        "reason_code"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "claim_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClaimVerdict"
+          }
+        },
+        "coverage_ok": {
+          "type": "boolean"
+        },
+        "decision": {
+          "enum": [
+            "pass",
+            "repair",
+            "abstain"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "supported",
+            "unsupported_claim",
+            "missing_citation",
+            "wrong_scope",
+            "incomplete_coverage",
+            "inconclusive"
+          ]
+        }
+      }
+    },
+    "CoverageLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chapter_id",
+        "expected_section_ids",
+        "verified_section_ids",
+        "failed_section_ids"
+      ],
+      "properties": {
+        "chapter_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_section_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "verified_section_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "failed_section_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

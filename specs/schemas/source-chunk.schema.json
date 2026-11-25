@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CanonicalSourceChunk",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "chunk_id",
+    "owner_id",
+    "book_id",
+    "book_version_id",
+    "chapter_id",
+    "reading_order",
+    "text",
+    "content_sha256",
+    "source_locator",
+    "start_offset",
+    "end_offset"
+  ],
+  "properties": {
+    "chunk_id": {
+      "type": "string",
+      "minLength": 12
+    },
+    "owner_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "book_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "book_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "chapter_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "section_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "heading_path": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reading_order": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "start_offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "end_offset": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_locator": {
+      "$ref": "#/$defs/SourceLocator"
+    },
+    "source_quality": {
+      "enum": [
+        "readable",
+        "low_confidence"
+      ]
+    },
+    "extraction_version": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "SourceLocator": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "SourceLocator",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "page_index"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "pdf"
+            },
+            "page_index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "page_label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "spine_href",
+            "text_quote"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "epub"
+            },
+            "spine_href": {
+              "type": "string",
+              "minLength": 1
+            },
+            "anchor_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "normalized_offset": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "text_quote": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}

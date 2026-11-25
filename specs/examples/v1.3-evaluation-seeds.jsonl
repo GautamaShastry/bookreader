@@ -1,0 +1,12 @@
+{"case_id": "UX-OPEN-01", "stage": "ui_trigger", "scenario": "open ready book; cached verified brief", "expected": "panel_open_and_brief_ready;model_calls=0", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "UX-OPEN-02", "stage": "idempotency", "scenario": "two tabs open same ready book", "expected": "no_duplicate_model_job", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "UX-OPEN-03", "stage": "ui_trigger", "scenario": "open ready book with pending brief", "expected": "pending_state_and_toc", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "UX-OPEN-04", "stage": "isolation", "scenario": "switch between owner-owned books", "expected": "active_version_switched_and_no_leak", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "UX-OPEN-05", "stage": "security", "scenario": "delete during cached brief read", "expected": "revoke_and_no_further_disclosure", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "BRIEF-01", "stage": "coverage", "scenario": "full TOC with verified chapter evidence", "expected": "complete_chapter_ledger", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "BRIEF-02", "stage": "coverage", "scenario": "one chapter unsupported due to image-only content", "expected": "partial_not_complete", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "BRIEF-03", "stage": "grounding", "scenario": "brief claims cover information absent from canonical source", "expected": "verification_failed", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "EV-CITE-01", "stage": "citation", "scenario": "brief source ID mismatches version hash", "expected": "hard_fail", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "EV-RET-01", "stage": "retrieval", "scenario": "book contains explicit code symbol", "expected": "gold_chunk_retrieved", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "EV-VER-01", "stage": "verifier", "scenario": "teacher invents external runtime behavior", "expected": "unsupported_claim_rejected", "status": "unlabeled_seed_only", "gold_source_ids": []}
+{"case_id": "EV-OPS-01", "stage": "performance", "scenario": "opening cached ready book", "expected": "no_model_call_and_metric_emitted", "status": "unlabeled_seed_only", "gold_source_ids": []}

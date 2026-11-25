@@ -1,0 +1,15 @@
+{
+  "request_id": "c0000000-0000-4000-8000-000000000001",
+  "book_version_id": "b0000000-0000-4000-8000-000000000001",
+  "question": "What is the definition given in Section 2?",
+  "passages": [
+    {
+      "chunk_id": "example_chunk_002",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "locator": "pdf:physical_page:12:span:3",
+      "section_id": "section_2"
+    }
+  ],
+  "coverage": "sufficient",
+  "canonical_source_proof": "backend_validated"
+}

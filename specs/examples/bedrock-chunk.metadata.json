@@ -1,0 +1,34 @@
+{
+  "metadataAttributes": {
+    "owner_id": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "cognito-user-sub"
+      }
+    },
+    "book_id": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "c4bfc070-559c-4257-bff7-cae729d0266d"
+      }
+    },
+    "book_version_id": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "638b2d68-6975-4e1b-ab3d-2ce5e1f2ba90"
+      }
+    },
+    "chunk_id": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "examplechunk01"
+      }
+    },
+    "chapter_id": {
+      "value": {
+        "type": "STRING",
+        "stringValue": "chapter-04"
+      }
+    }
+  }
+}

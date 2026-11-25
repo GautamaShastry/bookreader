@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BookScopeAnswerResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "message_id",
+    "conversation_id",
+    "book_id",
+    "book_version_id",
+    "status",
+    "answer",
+    "user_message",
+    "citations",
+    "grounding"
+  ],
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "conversation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "book_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "book_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": [
+        "answered",
+        "partial",
+        "insufficient_evidence",
+        "verification_failed",
+        "unsupported_content",
+        "processing"
+      ]
+    },
+    "answer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "user_message": {
+      "type": "string"
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Citation"
+      }
+    },
+    "grounding": {
+      "$ref": "#/$defs/Grounding"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "answered",
+              "partial"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "citations": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "insufficient_evidence",
+              "verification_failed",
+              "unsupported_content",
+              "processing"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "answer": {
+            "type": "null"
+          },
+          "citations": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "SourceLocator": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "SourceLocator",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "page_index"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "pdf"
+            },
+            "page_index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "page_label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "spine_href",
+            "text_quote"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "epub"
+            },
+            "spine_href": {
+              "type": "string",
+              "minLength": 1
+            },
+            "anchor_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "normalized_offset": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "text_quote": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "Citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "citation_id",
+        "chunk_id",
+        "book_id",
+        "book_version_id",
+        "chapter_id",
+        "source_locator",
+        "source_excerpt",
+        "verified"
+      ],
+      "properties": {
+        "citation_id": {
+          "type": "string"
+        },
+        "chunk_id": {
+          "type": "string"
+        },
+        "book_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "book_version_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chapter_id": {
+          "type": "string"
+        },
+        "source_locator": {
+          "$ref": "#/$defs/SourceLocator"
+        },
+        "source_excerpt": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "verified": {
+          "const": true
+        }
+      }
+    },
+    "Grounding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verified",
+        "claims_checked",
+        "claims_supported"
+      ],
+      "properties": {
+        "verified": {
+          "type": "boolean"
+        },
+        "claims_checked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "claims_supported": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verification_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
