@@ -351,3 +351,18 @@ def test_scorecard_now_evaluates_every_fixture() -> None:
     assert summary["passed"] is True, card["failures"]
     assert summary["coverage"] == 1.0
     assert summary["locator_valid"] == 1.0
+
+
+def test_nested_nav_entries_keep_their_level() -> None:
+    nav = _xhtml(
+        '<nav xmlns:epub="http://www.idpf.org/2007/ops" epub:type="toc"><ol>'
+        '<li><a href="c1.xhtml#a">One</a><ol><li><a href="c1.xhtml#a">One A</a></li></ol></li>'
+        "</ol></nav>"
+    )
+    opf = _opf(
+        extra_items=(
+            '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>'
+        )
+    )
+    document = parse_epub(_epub(files={"OPS/book.opf": opf, "OPS/nav.xhtml": nav}))
+    assert [(t.title, t.level) for t in document.toc] == [("One", 1), ("One A", 2)]

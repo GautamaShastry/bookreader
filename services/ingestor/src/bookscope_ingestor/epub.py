@@ -428,11 +428,8 @@ def _nav_toc(
             elif tag == "ol":
                 walk(child, depth)
 
-    walk(toc_nav, 0)
-    return [
-        TocEntry(max(e.level, 1), e.title, e.unit_index, e.origin, e.anchor_id, e.anchor_resolved)
-        for e in entries
-    ]
+    walk(toc_nav, 1)
+    return entries
 
 
 def _ncx_toc(
