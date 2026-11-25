@@ -64,7 +64,7 @@ exclude = ["^apps/", "^specs/"]
 
 [[tool.mypy.overrides]]
 # PyMuPDF ships without type hints; only modules that call it may make untyped calls.
-module = ["generate_fixtures", "bookscope_ingestor.pdf", "test_pdf_parser"]
+module = ["generate_fixtures", "bookscope_ingestor.pdf", "test_pdf_parser", "test_chunking_ledger"]
 disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
